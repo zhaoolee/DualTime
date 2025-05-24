@@ -1,0 +1,20 @@
+/* [next]/internal/font/google/geist_mono_c7d183a.module.css [app-client] (css) */
+@font-face {
+  font-family: Geist Mono Fallback;
+  src: local(Arial);
+  ascent-override: 74.67%;
+  descent-override: 21.92%;
+  line-gap-override: 0.0%;
+  size-adjust: 134.59%;
+}
+
+.geist_mono_c7d183a-module__ZW1U4G__className {
+  font-family: Geist Mono, Geist Mono Fallback;
+  font-style: normal;
+}
+
+.geist_mono_c7d183a-module__ZW1U4G__variable {
+  --font-geist-mono: "Geist Mono", "Geist Mono Fallback";
+}
+
+/*# sourceMappingURL=%5Bnext%5D_internal_font_google_geist_mono_c7d183a_module_b52d8e.css.map*/

@@ -34,8 +34,32 @@ const Clock = dynamic(() => import('./components/Clock'), {
 })
 
 export default function Home() {
+  useEffect(() => {
+    // 更精确的下拉刷新防护 - 只在页面顶部且是下拉动作时阻止
+    const preventPullToRefresh = (e) => {
+      // 如果页面已经滚动到顶部，且是向下滑动，则阻止默认行为
+      if (window.scrollY === 0 && e.touches && e.touches.length > 0) {
+        // 检查是否是在表盘区域的触摸
+        const touch = e.touches[0]
+        const element = document.elementFromPoint(touch.clientX, touch.clientY)
+        if (element && (element.closest('.timer-dial') || element.closest('.clock-dial'))) {
+          e.preventDefault()
+        }
+      }
+    }
+    
+    document.addEventListener('touchstart', preventPullToRefresh, { passive: false })
+    document.addEventListener('touchmove', preventPullToRefresh, { passive: false })
+    
+    return () => {
+      document.removeEventListener('touchstart', preventPullToRefresh)
+      document.removeEventListener('touchmove', preventPullToRefresh)
+    }
+  }, [])
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-8">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-8"
+         style={{ overscrollBehavior: 'none' }}>
       <div className="bg-white rounded-3xl shadow-2xl p-8 flex gap-8 items-center max-w-4xl">
         <div className="flex-1">
           <h2 className="text-2xl font-bold text-gray-800 mb-4 text-center select-none">番茄钟</h2>

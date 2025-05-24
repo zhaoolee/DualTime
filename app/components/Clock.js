@@ -23,7 +23,7 @@ export default function Clock() {
       <div className="flex flex-col items-center space-y-6">
         {/* 静态时钟表盘 */}
         <div className="relative">
-          <svg width="280" height="280" className="drop-shadow-lg">
+          <svg width="280" height="280" className="drop-shadow-lg clock-dial">
             {/* 外圆背景 */}
             <circle
               cx="140"
@@ -175,7 +175,7 @@ export default function Clock() {
     <div className="flex flex-col items-center space-y-6">
       {/* 时钟表盘 */}
       <div className="relative">
-        <svg width="280" height="280" className="drop-shadow-lg">
+        <svg width="280" height="280" className="drop-shadow-lg clock-dial">
           {/* 外圆背景 */}
           <circle
             cx="140"

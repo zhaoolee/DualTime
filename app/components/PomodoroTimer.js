@@ -95,6 +95,10 @@ export default function PomodoroTimer() {
 
   // 触摸事件处理 - 现在允许在倒计时时拖拽
   const handleTouchStart = (e) => {
+    // 阻止默认行为，防止触发下拉刷新
+    e.preventDefault()
+    e.stopPropagation()
+    
     setIsDragging(true)
     if (isRunning) {
       setIsResetting(true) // 开始重新设定时间
@@ -105,7 +109,9 @@ export default function PomodoroTimer() {
 
   const handleTouchMove = (e) => {
     if (!isDragging) return
+    // 阻止默认行为，防止触发滚动和下拉刷新
     e.preventDefault()
+    e.stopPropagation()
     const touch = e.touches[0]
     updateAngleFromTouch(touch)
   }
@@ -169,7 +175,7 @@ export default function PomodoroTimer() {
           ref={timerRef}
           width="280"
           height="280"
-          className="cursor-pointer"
+          className="cursor-pointer timer-dial"
           onMouseDown={handleMouseDown}
           onTouchStart={handleTouchStart}
         >
