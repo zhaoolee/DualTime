@@ -12,6 +12,62 @@ export default function PomodoroTimer() {
   const [isResetting, setIsResetting] = useState(false) // 是否正在重新设定时间
   const timerRef = useRef(null)
 
+  // 响应式尺寸
+  const getResponsiveSize = () => {
+    if (typeof window !== 'undefined') {
+      const width = window.innerWidth
+      const height = window.innerHeight
+      
+      // 考虑到容器高度为屏幕高度的80%，表盘需要适应这个高度
+      // 预留空间给标题、文字和内边距
+      const availableHeight = height * 0.8 - 200 // 预留200px给文字、标题和边距
+      const maxSizeFromHeight = Math.min(availableHeight, height * 0.5) // 最大不超过屏幕高度的50%
+      
+      // 基于宽度的尺寸计算
+      let sizeFromWidth
+      if (width < 480) {
+        sizeFromWidth = 160
+      } else if (width < 640) {
+        sizeFromWidth = 200
+      } else if (width < 768) {
+        sizeFromWidth = 240
+      } else if (width < 1024) {
+        sizeFromWidth = 280
+      } else if (width < 1280) {
+        sizeFromWidth = 320
+      } else {
+        sizeFromWidth = 360
+      }
+      
+      // 取宽度和高度限制中的较小值
+      const finalSize = Math.min(sizeFromWidth, maxSizeFromHeight)
+      const center = finalSize / 2
+      const outerRadius = center - 10
+      const innerRadius = center - 20
+      const strokeWidth = finalSize < 200 ? 1.5 : finalSize < 300 ? 2 : 3
+      
+      return { 
+        size: finalSize, 
+        center: center, 
+        outerRadius: outerRadius, 
+        innerRadius: innerRadius, 
+        strokeWidth: strokeWidth 
+      }
+    }
+    return { size: 280, center: 140, outerRadius: 130, innerRadius: 120, strokeWidth: 2 }
+  }
+
+  const [dimensions, setDimensions] = useState(getResponsiveSize())
+
+  useEffect(() => {
+    const handleResize = () => {
+      setDimensions(getResponsiveSize())
+    }
+
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
+
   // 计时器逻辑
   useEffect(() => {
     let interval = null
@@ -167,35 +223,37 @@ export default function PomodoroTimer() {
   const displayMinutes = (isDragging || isResetting) ? angleToMinutes(rotationAngle) : remainingMinutes
   const displaySeconds = (isDragging || isResetting) ? 0 : remainingSeconds
 
+  const { size, center, outerRadius, innerRadius, strokeWidth } = dimensions
+
   return (
-    <div className="flex flex-col items-center space-y-6">
+    <div className="flex flex-col items-center space-y-3 sm:space-y-4">
       {/* 番茄钟表盘 */}
       <div className="relative">
         <svg
           ref={timerRef}
-          width="280"
-          height="280"
+          width={size}
+          height={size}
           className="cursor-pointer timer-dial"
           onMouseDown={handleMouseDown}
           onTouchStart={handleTouchStart}
         >
           {/* 外圆 */}
           <circle
-            cx="140"
-            cy="140"
-            r="130"
+            cx={center}
+            cy={center}
+            r={outerRadius}
             fill="white"
             stroke="#e5e7eb"
-            strokeWidth="2"
+            strokeWidth={strokeWidth}
           />
           
           {/* 分钟刻度（每5分钟一个主刻度） */}
           {[...Array(12)].map((_, i) => {
             const angle = (i * 30) // 每30度一个刻度（对应5分钟）
-            const x1 = 140 + 120 * Math.cos((angle - 90) * Math.PI / 180)
-            const y1 = 140 + 120 * Math.sin((angle - 90) * Math.PI / 180)
-            const x2 = 140 + 110 * Math.cos((angle - 90) * Math.PI / 180)
-            const y2 = 140 + 110 * Math.sin((angle - 90) * Math.PI / 180)
+            const x1 = center + (outerRadius - 10) * Math.cos((angle - 90) * Math.PI / 180)
+            const y1 = center + (outerRadius - 10) * Math.sin((angle - 90) * Math.PI / 180)
+            const x2 = center + (outerRadius - 20) * Math.cos((angle - 90) * Math.PI / 180)
+            const y2 = center + (outerRadius - 20) * Math.sin((angle - 90) * Math.PI / 180)
             
             return (
               <line
@@ -205,7 +263,7 @@ export default function PomodoroTimer() {
                 x2={x2}
                 y2={y2}
                 stroke="#6b7280"
-                strokeWidth="2"
+                strokeWidth={strokeWidth}
               />
             )
           })}
@@ -214,10 +272,10 @@ export default function PomodoroTimer() {
           {[...Array(60)].map((_, i) => {
             if (i % 5 !== 0) { // 不是主刻度的位置
               const angle = i * 6 // 每6度一个小刻度（对应1分钟）
-              const x1 = 140 + 120 * Math.cos((angle - 90) * Math.PI / 180)
-              const y1 = 140 + 120 * Math.sin((angle - 90) * Math.PI / 180)
-              const x2 = 140 + 115 * Math.cos((angle - 90) * Math.PI / 180)
-              const y2 = 140 + 115 * Math.sin((angle - 90) * Math.PI / 180)
+              const x1 = center + (outerRadius - 10) * Math.cos((angle - 90) * Math.PI / 180)
+              const y1 = center + (outerRadius - 10) * Math.sin((angle - 90) * Math.PI / 180)
+              const x2 = center + (outerRadius - 15) * Math.cos((angle - 90) * Math.PI / 180)
+              const y2 = center + (outerRadius - 15) * Math.sin((angle - 90) * Math.PI / 180)
               
               return (
                 <line
@@ -237,8 +295,8 @@ export default function PomodoroTimer() {
           {/* 分钟刻度标签 */}
           {[0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55].map((minute) => {
             const angle = minute * 6 // 每分钟6度
-            const x = 140 + 100 * Math.cos((angle - 90) * Math.PI / 180)
-            const y = 140 + 100 * Math.sin((angle - 90) * Math.PI / 180)
+            const x = center + (outerRadius - 40) * Math.cos((angle - 90) * Math.PI / 180)
+            const y = center + (outerRadius - 40) * Math.sin((angle - 90) * Math.PI / 180)
             
             return (
               <text
@@ -247,7 +305,7 @@ export default function PomodoroTimer() {
                 y={y}
                 textAnchor="middle"
                 dominantBaseline="central"
-                className="fill-gray-600 text-sm font-semibold select-none"
+                className="fill-gray-600 text-[10px] sm:text-xs lg:text-sm font-semibold select-none"
               >
                 {minute}
               </text>
@@ -257,10 +315,10 @@ export default function PomodoroTimer() {
           {/* 进度扇形 - 从12点位置开始 */}
           {rotationAngle > 0 && (
             <path
-              d={`M 140 140 L 140 10 A 130 130 0 ${rotationAngle > 180 ? 1 : 0} 1 ${
-                140 + 130 * Math.sin(rotationAngle * Math.PI / 180)
+              d={`M ${center} ${center} L ${center} ${center - outerRadius} A ${outerRadius} ${outerRadius} 0 ${rotationAngle > 180 ? 1 : 0} 1 ${
+                center + outerRadius * Math.sin(rotationAngle * Math.PI / 180)
               } ${
-                140 - 130 * Math.cos(rotationAngle * Math.PI / 180)
+                center - outerRadius * Math.cos(rotationAngle * Math.PI / 180)
               } Z`}
               fill={isRunning && !isDragging && !isResetting ? "#10b981" : "#ef4444"}
               opacity="0.7"
@@ -269,20 +327,20 @@ export default function PomodoroTimer() {
           
           {/* 计时针 */}
           <line
-            x1="140"
-            y1="140"
-            x2={140 + 120 * Math.sin(rotationAngle * Math.PI / 180)}
-            y2={140 - 120 * Math.cos(rotationAngle * Math.PI / 180)}
+            x1={center}
+            y1={center}
+            x2={center + (outerRadius - 10) * Math.sin(rotationAngle * Math.PI / 180)}
+            y2={center - (outerRadius - 10) * Math.cos(rotationAngle * Math.PI / 180)}
             stroke="#374151"
-            strokeWidth="4"
+            strokeWidth={Math.max(2, strokeWidth + 1)}
             strokeLinecap="round"
           />
           
           {/* 旋转旋钮 */}
           <circle
-            cx={140 + 120 * Math.sin(rotationAngle * Math.PI / 180)}
-            cy={140 - 120 * Math.cos(rotationAngle * Math.PI / 180)}
-            r="12"
+            cx={center + (outerRadius - 10) * Math.sin(rotationAngle * Math.PI / 180)}
+            cy={center - (outerRadius - 10) * Math.cos(rotationAngle * Math.PI / 180)}
+            r={size < 200 ? "6" : size < 280 ? "8" : size < 320 ? "10" : "12"}
             fill="#374151"
             stroke="white"
             strokeWidth="3"
@@ -291,17 +349,17 @@ export default function PomodoroTimer() {
           
           {/* 12点位置的起始标记 */}
           <circle
-            cx="140"
-            cy="10"
-            r="4"
+            cx={center}
+            cy={center - outerRadius}
+            r={size < 200 ? "2" : size < 280 ? "3" : "4"}
             fill="#10b981"
           />
           
           {/* 中心圆点 */}
           <circle
-            cx="140"
-            cy="140"
-            r="6"
+            cx={center}
+            cy={center}
+            r={size < 200 ? "3" : size < 280 ? "4" : size < 320 ? "5" : "6"}
             fill="#374151"
           />
         </svg>
@@ -309,12 +367,12 @@ export default function PomodoroTimer() {
       
       {/* 时间显示 */}
       <div className="text-center">
-        <div className="text-4xl font-bold text-gray-800 mb-4 select-none">
+        <div className="text-lg sm:text-2xl lg:text-3xl xl:text-4xl font-bold text-gray-800 mb-1 sm:mb-2 select-none">
           {String(displayMinutes).padStart(2, '0')}:{String(displaySeconds).padStart(2, '0')}
         </div>
         
         {/* 状态提示 */}
-        <div className="text-sm text-gray-500 select-none">
+        <div className="text-[10px] sm:text-xs lg:text-sm text-gray-500 select-none px-1">
           {isDragging || isResetting ? '拖拽重新设定时间，松手开始倒计时' : 
            isRunning ? '倒计时进行中...（可拖拽指针重新设定）' : 
            '拖拽旋钮设定番茄钟时间'}
