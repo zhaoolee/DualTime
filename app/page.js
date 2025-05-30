@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import dynamic from 'next/dynamic'
+import Link from 'next/link'
 
 // 禁用服务端渲染，避免 hydration 错误
 const PomodoroTimer = dynamic(() => import('./components/PomodoroTimer'), {
@@ -88,6 +89,17 @@ export default function Home() {
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-1 sm:p-2 lg:p-4 xl:p-6 relative"
          style={{ overscrollBehavior: 'none' }}>
       
+      {/* 指南针链接 */}
+      <Link
+        href="/compass"
+        className="fixed top-4 left-4 z-50 bg-white/80 backdrop-blur-sm hover:bg-white/90 transition-all duration-200 rounded-full p-2 sm:p-3 shadow-lg hover:shadow-xl border border-gray-200/50"
+        title="指南针"
+      >
+        <svg className="w-5 h-5 sm:w-6 sm:h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 12l-4-4v8l4-4zm0 0l-4 4m4-4H8" />
+        </svg>
+      </Link>
+
       {/* 全屏按钮 */}
       <button
         onClick={toggleFullscreen}
