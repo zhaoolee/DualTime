@@ -778,7 +778,7 @@ export default function Clock() {
       {/* 时间显示 - 炉石风格 */}
       <div className="text-center">
         {/* 时间显示 */}
-        <div className="relative inline-block mb-2">
+        <div className="relative  mb-2">
           {/* 时间背景装饰 */}
           <div className="absolute -inset-2 bg-gradient-to-br from-blue-400 via-blue-500 to-blue-600 rounded-lg shadow-lg opacity-20"></div>
           <div className="relative text-lg sm:text-2xl lg:text-3xl xl:text-4xl font-bold select-none px-3 py-1">

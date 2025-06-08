@@ -101,14 +101,44 @@ export default function Home() {
   return (
     <div className="min-h-screen relative overflow-hidden"
          style={{ 
-           background: `
-             radial-gradient(circle at 20% 30%, rgba(139, 69, 19, 0.3) 0%, transparent 50%),
-             radial-gradient(circle at 80% 70%, rgba(25, 25, 112, 0.3) 0%, transparent 50%),
-             radial-gradient(circle at 50% 50%, rgba(75, 0, 130, 0.2) 0%, transparent 70%),
-             linear-gradient(135deg, #1a1a2e 0%, #16213e 25%, #0f3460 50%, #533483 75%, #8b4513 100%)
-           `,
            overscrollBehavior: 'none' 
          }}>
+      
+      {/* 简约金色光柱背景 */}
+      <div className="absolute inset-0 overflow-hidden">
+        {/* 基础暗色背景 */}
+        <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900"></div>
+        
+        {/* 静态金色光柱 - 左上到右下 */}
+        <div 
+          className="absolute inset-0"
+          style={{
+            background: `
+              linear-gradient(
+                135deg,
+                transparent 0%,
+                transparent 20%,
+                rgba(255, 215, 0, 0.1) 30%,
+                rgba(255, 193, 7, 0.3) 40%,
+                rgba(255, 179, 0, 0.5) 50%,
+                rgba(255, 193, 7, 0.3) 60%,
+                rgba(255, 215, 0, 0.1) 70%,
+                transparent 80%,
+                transparent 100%
+              )
+            `,
+            animation: 'breathe 4s ease-in-out infinite'
+          }}
+        />
+      </div>
+
+      {/* 添加CSS动画样式 */}
+      <style jsx>{`
+        @keyframes breathe {
+          0%, 100% { opacity: 0.6; }
+          50% { opacity: 1; }
+        }
+      `}</style>
       
       {/* 魔法粒子背景效果 */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">

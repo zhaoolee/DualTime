@@ -194,15 +194,11 @@ export default function CompassPage() {
             {/* 顶部标题装饰 */}
             <div className="relative z-10 text-center pt-6 pb-4">
               <div className="inline-flex items-center space-x-3">
-                <div className="w-8 h-8 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-full flex items-center justify-center border-2 border-emerald-700 shadow-lg">
-                  <div className="w-2 h-2 bg-emerald-200 rounded-full"></div>
-                </div>
+                
                 <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-emerald-700 via-emerald-800 to-emerald-900 bg-clip-text text-transparent drop-shadow-lg">
-                  玄乎儿方位
+                玄乎儿方位
                 </h1>
-                <div className="w-8 h-8 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center border-2 border-blue-700 shadow-lg">
-                  <div className="w-2 h-2 bg-blue-200 rounded-full"></div>
-                </div>
+                
               </div>
             </div>
             
