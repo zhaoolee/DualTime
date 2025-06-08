@@ -46,15 +46,35 @@ export default function PomodoroTimer() {
       const innerRadius = center - 20
       const strokeWidth = finalSize < 200 ? 1.5 : finalSize < 300 ? 2 : 3
       
+      // 响应式圆环宽度 - 针对更小屏幕优化
+      let ringWidth
+      if (finalSize < 160) {
+        ringWidth = 6  // 超小屏幕
+      } else if (finalSize < 200) {
+        ringWidth = 8  // 很小屏幕
+      } else if (finalSize < 240) {
+        ringWidth = 10 // 小屏幕 (iPhone SE等)
+      } else if (finalSize < 280) {
+        ringWidth = 12 // 中小屏幕
+      } else if (finalSize < 320) {
+        ringWidth = 14 // 中屏幕
+      } else {
+        ringWidth = 16 // 大屏幕
+      }
+      const outerRingInset = ringWidth
+      const innerRingInset = Math.max(4, ringWidth - 3) // 确保内圆环至少有4px
+      
       return { 
         size: finalSize, 
         center: center, 
         outerRadius: outerRadius, 
         innerRadius: innerRadius, 
-        strokeWidth: strokeWidth 
+        strokeWidth: strokeWidth,
+        outerRingInset: outerRingInset,
+        innerRingInset: innerRingInset
       }
     }
-    return { size: 280, center: 140, outerRadius: 130, innerRadius: 120, strokeWidth: 2 }
+    return { size: 280, center: 140, outerRadius: 130, innerRadius: 120, strokeWidth: 2, outerRingInset: 14, innerRingInset: 11 }
   }
 
   const [dimensions, setDimensions] = useState(getResponsiveSize())
@@ -223,159 +243,293 @@ export default function PomodoroTimer() {
   const displayMinutes = (isDragging || isResetting) ? angleToMinutes(rotationAngle) : remainingMinutes
   const displaySeconds = (isDragging || isResetting) ? 0 : remainingSeconds
 
-  const { size, center, outerRadius, innerRadius, strokeWidth } = dimensions
+  const { size, center, outerRadius, innerRadius, strokeWidth, outerRingInset, innerRingInset } = dimensions
 
   return (
     <div className="flex flex-col items-center space-y-3 sm:space-y-4">
-      {/* 番茄钟表盘 */}
+      {/* 番茄钟表盘 - 炉石传说风格 */}
       <div className="relative">
-        <svg
-          ref={timerRef}
-          width={size}
-          height={size}
-          className="cursor-pointer timer-dial"
-          onMouseDown={handleMouseDown}
-          onTouchStart={handleTouchStart}
-        >
-          {/* 外圆 */}
-          <circle
-            cx={center}
-            cy={center}
-            r={outerRadius}
-            fill="white"
-            stroke="#e5e7eb"
-            strokeWidth={strokeWidth}
-          />
+        {/* 外层装饰环 - 响应式宽度 */}
+        <div 
+          className="absolute bg-gradient-to-br from-amber-600 via-amber-700 to-amber-800 rounded-full shadow-2xl opacity-80"
+          style={{ inset: `-${outerRingInset}px` }}
+        ></div>
+        <div 
+          className="absolute bg-gradient-to-br from-amber-500 via-amber-600 to-amber-700 rounded-full shadow-xl opacity-90"
+          style={{ inset: `-${innerRingInset}px` }}
+        ></div>
+        
+        {/* 主表盘容器 */}
+        <div className="relative bg-gradient-to-br from-amber-100 via-amber-50 to-amber-200 rounded-full border-4 border-amber-600 shadow-2xl overflow-hidden">
           
-          {/* 分钟刻度（每5分钟一个主刻度） */}
-          {[...Array(12)].map((_, i) => {
-            const angle = (i * 30) // 每30度一个刻度（对应5分钟）
-            const x1 = center + (outerRadius - 10) * Math.cos((angle - 90) * Math.PI / 180)
-            const y1 = center + (outerRadius - 10) * Math.sin((angle - 90) * Math.PI / 180)
-            const x2 = center + (outerRadius - 20) * Math.cos((angle - 90) * Math.PI / 180)
-            const y2 = center + (outerRadius - 20) * Math.sin((angle - 90) * Math.PI / 180)
-            
+          {/* 内部纹理效果 */}
+          <div className="absolute inset-0 rounded-full opacity-30">
+            <div className="absolute inset-0 bg-gradient-to-br from-transparent via-amber-300/20 to-amber-400/30 rounded-full"></div>
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_30%,rgba(255,215,0,0.4)_0%,transparent_60%)] rounded-full"></div>
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_70%,rgba(184,134,11,0.3)_0%,transparent_60%)] rounded-full"></div>
+          </div>
+          
+          {/* 装饰宝石 */}
+          {[0, 90, 180, 270].map((angle, index) => {
+            const colors = ['from-ruby-400 to-ruby-600', 'from-emerald-400 to-emerald-600', 'from-sapphire-400 to-sapphire-600', 'from-amethyst-400 to-amethyst-600']
+            const x = center + (outerRadius + 15) * Math.cos((angle - 90) * Math.PI / 180)
+            const y = center + (outerRadius + 15) * Math.sin((angle - 90) * Math.PI / 180)
             return (
-              <line
-                key={i}
-                x1={x1}
-                y1={y1}
-                x2={x2}
-                y2={y2}
-                stroke="#6b7280"
-                strokeWidth={strokeWidth}
-              />
+              <div
+                key={index}
+                className={`absolute w-4 h-4 bg-gradient-to-br ${colors[index]} rounded-full border-2 border-amber-700 shadow-lg z-20`}
+                style={{
+                  left: `${x - 8}px`,
+                  top: `${y - 8}px`,
+                }}
+              >
+                <div className="w-full h-full bg-gradient-to-br from-white/40 to-transparent rounded-full"></div>
+              </div>
             )
           })}
-          
-          {/* 分钟小刻度 */}
-          {[...Array(60)].map((_, i) => {
-            if (i % 5 !== 0) { // 不是主刻度的位置
-              const angle = i * 6 // 每6度一个小刻度（对应1分钟）
-              const x1 = center + (outerRadius - 10) * Math.cos((angle - 90) * Math.PI / 180)
-              const y1 = center + (outerRadius - 10) * Math.sin((angle - 90) * Math.PI / 180)
-              const x2 = center + (outerRadius - 15) * Math.cos((angle - 90) * Math.PI / 180)
-              const y2 = center + (outerRadius - 15) * Math.sin((angle - 90) * Math.PI / 180)
+
+          <svg
+            ref={timerRef}
+            width={size}
+            height={size}
+            className="cursor-pointer timer-dial relative z-10"
+            onMouseDown={handleMouseDown}
+            onTouchStart={handleTouchStart}
+          >
+            {/* 外圆 - 金属质感 */}
+            <defs>
+              <radialGradient id="metalGradient" cx="30%" cy="30%">
+                <stop offset="0%" stopColor="#fbbf24" />
+                <stop offset="50%" stopColor="#f59e0b" />
+                <stop offset="100%" stopColor="#d97706" />
+              </radialGradient>
+              <radialGradient id="innerGradient" cx="50%" cy="50%">
+                <stop offset="0%" stopColor="#fef3c7" />
+                <stop offset="70%" stopColor="#fde68a" />
+                <stop offset="100%" stopColor="#f59e0b" />
+              </radialGradient>
+              <filter id="glow">
+                <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+                <feMerge> 
+                  <feMergeNode in="coloredBlur"/>
+                  <feMergeNode in="SourceGraphic"/>
+                </feMerge>
+              </filter>
+            </defs>
+            
+            <circle
+              cx={center}
+              cy={center}
+              r={outerRadius}
+              fill="url(#innerGradient)"
+              stroke="url(#metalGradient)"
+              strokeWidth={strokeWidth * 2}
+            />
+            
+            {/* 内圆装饰 */}
+            <circle
+              cx={center}
+              cy={center}
+              r={innerRadius}
+              fill="none"
+              stroke="#92400e"
+              strokeWidth={strokeWidth}
+              opacity="0.6"
+            />
+            
+            {/* 分钟刻度（每5分钟一个主刻度） - 金属风格 */}
+            {[...Array(12)].map((_, i) => {
+              const angle = (i * 30) // 每30度一个刻度（对应5分钟）
+              const x1 = center + (outerRadius - 15) * Math.cos((angle - 90) * Math.PI / 180)
+              const y1 = center + (outerRadius - 15) * Math.sin((angle - 90) * Math.PI / 180)
+              const x2 = center + (outerRadius - 25) * Math.cos((angle - 90) * Math.PI / 180)
+              const y2 = center + (outerRadius - 25) * Math.sin((angle - 90) * Math.PI / 180)
               
               return (
                 <line
-                  key={`small-${i}`}
+                  key={i}
                   x1={x1}
                   y1={y1}
                   x2={x2}
                   y2={y2}
-                  stroke="#d1d5db"
-                  strokeWidth="1"
+                  stroke="#92400e"
+                  strokeWidth={strokeWidth * 1.5}
+                  strokeLinecap="round"
                 />
               )
-            }
-            return null
-          })}
-          
-          {/* 分钟刻度标签 */}
-          {[0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55].map((minute) => {
-            const angle = minute * 6 // 每分钟6度
-            const x = center + (outerRadius - 40) * Math.cos((angle - 90) * Math.PI / 180)
-            const y = center + (outerRadius - 40) * Math.sin((angle - 90) * Math.PI / 180)
+            })}
             
-            return (
-              <text
-                key={minute}
-                x={x}
-                y={y}
-                textAnchor="middle"
-                dominantBaseline="central"
-                className="fill-gray-600 text-[10px] sm:text-xs lg:text-sm font-semibold select-none"
-              >
-                {minute}
-              </text>
-            )
-          })}
-          
-          {/* 进度扇形 - 从12点位置开始 */}
-          {rotationAngle > 0 && (
-            <path
-              d={`M ${center} ${center} L ${center} ${center - outerRadius} A ${outerRadius} ${outerRadius} 0 ${rotationAngle > 180 ? 1 : 0} 1 ${
-                center + outerRadius * Math.sin(rotationAngle * Math.PI / 180)
-              } ${
-                center - outerRadius * Math.cos(rotationAngle * Math.PI / 180)
-              } Z`}
-              fill={isRunning && !isDragging && !isResetting ? "#10b981" : "#ef4444"}
-              opacity="0.7"
+            {/* 分钟小刻度 - 精致风格 */}
+            {[...Array(60)].map((_, i) => {
+              if (i % 5 !== 0) { // 不是主刻度的位置
+                const angle = i * 6 // 每6度一个小刻度（对应1分钟）
+                const x1 = center + (outerRadius - 15) * Math.cos((angle - 90) * Math.PI / 180)
+                const y1 = center + (outerRadius - 15) * Math.sin((angle - 90) * Math.PI / 180)
+                const x2 = center + (outerRadius - 20) * Math.cos((angle - 90) * Math.PI / 180)
+                const y2 = center + (outerRadius - 20) * Math.sin((angle - 90) * Math.PI / 180)
+                
+                return (
+                  <line
+                    key={`small-${i}`}
+                    x1={x1}
+                    y1={y1}
+                    x2={x2}
+                    y2={y2}
+                    stroke="#b45309"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                  />
+                )
+              }
+              return null
+            })}
+            
+            {/* 分钟刻度标签 - 炉石风格字体 */}
+            {[0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55].map((minute) => {
+              const angle = minute * 6 // 每分钟6度
+              const x = center + (outerRadius - 45) * Math.cos((angle - 90) * Math.PI / 180)
+              const y = center + (outerRadius - 45) * Math.sin((angle - 90) * Math.PI / 180)
+              
+              return (
+                <g key={minute}>
+                  {/* 背景文字 - 轻微阴影增强可读性 */}
+                  <text
+                    x={x}
+                    y={y}
+                    textAnchor="middle"
+                    dominantBaseline="central"
+                    className="text-[10px] sm:text-xs lg:text-sm font-bold select-none"
+                    fill="#ffffff"
+                    stroke="#ffffff"
+                    strokeWidth="2"
+                  >
+                    {minute}
+                  </text>
+                  {/* 主文字 */}
+                  <text
+                    x={x}
+                    y={y}
+                    textAnchor="middle"
+                    dominantBaseline="central"
+                    className="fill-amber-900 text-[10px] sm:text-xs lg:text-sm font-bold select-none"
+                  >
+                    {minute}
+                  </text>
+                </g>
+              )
+            })}
+            
+            {/* 进度扇形 - 魔法效果 */}
+            {rotationAngle > 0 && (
+              <>
+                <defs>
+                  <radialGradient id="progressGradient" cx="50%" cy="50%">
+                    <stop offset="0%" stopColor={isRunning && !isDragging && !isResetting ? "#10b981" : "#ef4444"} stopOpacity="0.8" />
+                    <stop offset="100%" stopColor={isRunning && !isDragging && !isResetting ? "#059669" : "#dc2626"} stopOpacity="0.6" />
+                  </radialGradient>
+                </defs>
+                <path
+                  d={`M ${center} ${center} L ${center} ${center - outerRadius} A ${outerRadius} ${outerRadius} 0 ${rotationAngle > 180 ? 1 : 0} 1 ${
+                    center + outerRadius * Math.sin(rotationAngle * Math.PI / 180)
+                  } ${
+                    center - outerRadius * Math.cos(rotationAngle * Math.PI / 180)
+                  } Z`}
+                  fill="url(#progressGradient)"
+                  filter="url(#glow)"
+                />
+              </>
+            )}
+            
+            {/* 计时针 - 魔法指针 */}
+            <line
+              x1={center}
+              y1={center}
+              x2={center + (outerRadius - 15) * Math.sin(rotationAngle * Math.PI / 180)}
+              y2={center - (outerRadius - 15) * Math.cos(rotationAngle * Math.PI / 180)}
+              stroke="#92400e"
+              strokeWidth={Math.max(3, strokeWidth + 2)}
+              strokeLinecap="round"
+              filter="url(#glow)"
             />
-          )}
-          
-          {/* 计时针 */}
-          <line
-            x1={center}
-            y1={center}
-            x2={center + (outerRadius - 10) * Math.sin(rotationAngle * Math.PI / 180)}
-            y2={center - (outerRadius - 10) * Math.cos(rotationAngle * Math.PI / 180)}
-            stroke="#374151"
-            strokeWidth={Math.max(2, strokeWidth + 1)}
-            strokeLinecap="round"
-          />
-          
-          {/* 旋转旋钮 */}
-          <circle
-            cx={center + (outerRadius - 10) * Math.sin(rotationAngle * Math.PI / 180)}
-            cy={center - (outerRadius - 10) * Math.cos(rotationAngle * Math.PI / 180)}
-            r={size < 200 ? "6" : size < 280 ? "8" : size < 320 ? "10" : "12"}
-            fill="#374151"
-            stroke="white"
-            strokeWidth="3"
-            className="cursor-grab active:cursor-grabbing"
-          />
-          
-          {/* 12点位置的起始标记 */}
-          <circle
-            cx={center}
-            cy={center - outerRadius}
-            r={size < 200 ? "2" : size < 280 ? "3" : "4"}
-            fill="#10b981"
-          />
-          
-          {/* 中心圆点 */}
-          <circle
-            cx={center}
-            cy={center}
-            r={size < 200 ? "3" : size < 280 ? "4" : size < 320 ? "5" : "6"}
-            fill="#374151"
-          />
-        </svg>
+            
+            {/* 旋转旋钮 - 宝石风格 */}
+            <circle
+              cx={center + (outerRadius - 15) * Math.sin(rotationAngle * Math.PI / 180)}
+              cy={center - (outerRadius - 15) * Math.cos(rotationAngle * Math.PI / 180)}
+              r={size < 200 ? "8" : size < 280 ? "10" : size < 320 ? "12" : "14"}
+              fill="url(#metalGradient)"
+              stroke="#92400e"
+              strokeWidth="3"
+              className="cursor-grab active:cursor-grabbing"
+              filter="url(#glow)"
+            />
+            
+            {/* 旋钮内部宝石 */}
+            <circle
+              cx={center + (outerRadius - 15) * Math.sin(rotationAngle * Math.PI / 180)}
+              cy={center - (outerRadius - 15) * Math.cos(rotationAngle * Math.PI / 180)}
+              r={size < 200 ? "4" : size < 280 ? "5" : size < 320 ? "6" : "7"}
+              fill="#dc2626"
+              opacity="0.8"
+            />
+            
+            {/* 12点位置的起始标记 - 魔法水晶 */}
+            <circle
+              cx={center}
+              cy={center - outerRadius}
+              r={size < 200 ? "4" : size < 280 ? "5" : "6"}
+              fill="#10b981"
+              stroke="#065f46"
+              strokeWidth="2"
+              filter="url(#glow)"
+            />
+            
+            {/* 中心圆点 - 魔法核心 */}
+            <circle
+              cx={center}
+              cy={center}
+              r={size < 200 ? "6" : size < 280 ? "8" : size < 320 ? "10" : "12"}
+              fill="url(#metalGradient)"
+              stroke="#92400e"
+              strokeWidth="2"
+              filter="url(#glow)"
+            />
+            <circle
+              cx={center}
+              cy={center}
+              r={size < 200 ? "3" : size < 280 ? "4" : size < 320 ? "5" : "6"}
+              fill="#dc2626"
+              opacity="0.9"
+            />
+          </svg>
+        </div>
       </div>
       
-      {/* 时间显示 */}
+      {/* 时间显示 - 炉石风格 */}
       <div className="text-center">
-        <div className="text-lg sm:text-2xl lg:text-3xl xl:text-4xl font-bold text-gray-800 mb-1 sm:mb-2 select-none">
-          {String(displayMinutes).padStart(2, '0')}:{String(displaySeconds).padStart(2, '0')}
+        {/* 时间显示 */}
+        <div className="relative  mb-2">
+          {/* 时间背景装饰 */}
+          <div className="absolute -inset-2 bg-gradient-to-br from-amber-400 via-amber-500 to-amber-600 rounded-lg shadow-lg opacity-20"></div>
+          <div className="relative text-lg sm:text-2xl lg:text-3xl xl:text-4xl font-bold select-none px-3 py-1"
+               style={{
+                 background: 'linear-gradient(135deg, #92400e 0%, #d97706 50%, #f59e0b 100%)',
+                 WebkitBackgroundClip: 'text',
+                 WebkitTextFillColor: 'transparent',
+                 filter: 'drop-shadow(1px 1px 2px rgba(255,255,255,0.8))'
+               }}>
+            {String(displayMinutes).padStart(2, '0')}:{String(displaySeconds).padStart(2, '0')}
+          </div>
         </div>
         
-        {/* 状态提示 */}
-        <div className="text-[10px] sm:text-xs lg:text-sm text-gray-500 select-none px-1">
-          {isDragging || isResetting ? '拖拽重新设定时间，松手开始倒计时' : 
-           isRunning ? '倒计时进行中...（可拖拽指针重新设定）' : 
-           '拖拽旋钮设定番茄钟时间'}
+        {/* 状态提示 - 魔法卷轴风格 */}
+        <div className="relative inline-block">
+          <div className="absolute -inset-1 bg-gradient-to-r from-amber-200 via-amber-100 to-amber-200 rounded-md opacity-60"></div>
+          <div className="relative text-[10px] sm:text-xs lg:text-sm text-amber-800 font-semibold select-none px-2 py-1 bg-amber-50/80 rounded-md border border-amber-300">
+            {isDragging || isResetting ? '🔮 拖拽重新设定时间，松手开始倒计时' : 
+             isRunning ? '⚡ 魔法倒计时进行中...（可拖拽指针重新设定）' : 
+             '✨ 拖拽旋钮设定番茄魔法钟时间'}
+          </div>
         </div>
       </div>
     </div>
