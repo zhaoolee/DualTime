@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 
 export default function Compass() {
   const [heading, setHeading] = useState(0)
@@ -9,15 +9,58 @@ export default function Compass() {
   const [isInitialized, setIsInitialized] = useState(false)
   const [isMounted, setIsMounted] = useState(false)
 
+  // 简化的防抖处理
+  const [lastUpdateTime, setLastUpdateTime] = useState(0)
+  const [displayRotation, setDisplayRotation] = useState(0) // 用于显示的累积角度
+  const accumulatedRotation = useRef(0) // 累积旋转角度，可以超过360度
+
   const handleOrientation = (event) => {
+    const now = Date.now()
+    
+    // 节流：限制更新频率，每100ms最多更新一次
+    if (now - lastUpdateTime < 100) {
+      return
+    }
+    
+    let newHeading = 0
+    
     // For iOS devices - uses webkitCompassHeading
     if (event.webkitCompassHeading) {
-      setHeading(event.webkitCompassHeading)
+      newHeading = event.webkitCompassHeading
     }
     // For Android devices - calculate from alpha angle
     else if (event.alpha) {
-      setHeading(360 - event.alpha)
+      newHeading = 360 - event.alpha
     }
+    
+    // 初始化累积角度
+    if (accumulatedRotation.current === 0) {
+      accumulatedRotation.current = newHeading
+      setHeading(Math.round(newHeading))
+      setDisplayRotation(newHeading)
+      setLastUpdateTime(now)
+      return
+    }
+    
+    // 计算当前显示角度（0-360范围内）
+    const currentDisplayed = ((accumulatedRotation.current % 360) + 360) % 360
+    
+    // 计算角度差值，选择最短路径
+    let angleDiff = newHeading - currentDisplayed
+    if (angleDiff > 180) {
+      angleDiff -= 360
+    } else if (angleDiff < -180) {
+      angleDiff += 360
+    }
+    
+    // 只有变化超过2度时才更新
+    if (Math.abs(angleDiff) > 2) {
+      accumulatedRotation.current += angleDiff
+      setHeading(Math.round(newHeading)) // 保存实际角度用于显示信息
+      setDisplayRotation(accumulatedRotation.current) // 更新显示角度
+    }
+    
+    setLastUpdateTime(now)
   }
 
   const initializeCompass = () => {
@@ -50,6 +93,8 @@ export default function Compass() {
       }
     }
   }, [])
+
+
 
   // Prevent rendering until component is mounted on client
   if (!isMounted) {
@@ -222,8 +267,8 @@ export default function Compass() {
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="relative w-full h-full">
               {/* 指南针刻度盘 */}
-              <div className="absolute inset-0 flex items-center justify-center transition-transform duration-300"
-                   style={{ transform: `rotate(${-heading}deg)` }}>
+              <div className="absolute inset-0 flex items-center justify-center transition-transform duration-300 ease-out"
+                   style={{ transform: `rotate(${-displayRotation}deg)` }}>
                 <div className="w-full h-full rounded-full flex items-center justify-center relative">
                   
                   {/* 北方指针 - 红色 */}
