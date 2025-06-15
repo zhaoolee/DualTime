@@ -60,66 +60,149 @@ export default function Clock() {
       const width = window.innerWidth
       const height = window.innerHeight
       
-      // 考虑到容器高度为屏幕高度的80%，表盘需要适应这个高度
-      // 预留空间给标题、文字和内边距
-      const availableHeight = height * 0.8 - 200 // 预留200px给文字、标题和边距
-      const maxSizeFromHeight = Math.min(availableHeight, height * 0.5) // 最大不超过屏幕高度的50%
+      // 检测是否为移动设备的横屏模式
+      const isMobile = width <= 1024
+      const isLandscape = isMobile && width > height
       
-      // 基于宽度的尺寸计算
-      let sizeFromWidth
-      if (width < 480) {
-        sizeFromWidth = 160
-      } else if (width < 640) {
-        sizeFromWidth = 200
-      } else if (width < 768) {
-        sizeFromWidth = 240
-      } else if (width < 1024) {
-        sizeFromWidth = 280
-      } else if (width < 1280) {
-        sizeFromWidth = 320
+      if (isLandscape) {
+        // 横屏模式：优先考虑高度限制，留出更多空间给界面元素
+        const availableHeight = height - 60 // 进一步减少预留空间到60px
+        const maxSizeFromHeight = Math.min(availableHeight * 0.9, height * 0.8) // 增加到可用高度的90%，最大80%屏幕高度
+        
+        // 横屏时基于高度的尺寸计算
+        let sizeFromHeight
+        if (height <= 450) {
+          sizeFromHeight = Math.min(180, maxSizeFromHeight) // 进一步增加超小横屏尺寸
+        } else if (height <= 600) {
+          sizeFromHeight = Math.min(220, maxSizeFromHeight) // 进一步增加小横屏尺寸
+        } else {
+          sizeFromHeight = Math.min(280, maxSizeFromHeight) // 进一步增加大横屏尺寸
+        }
+        
+        // 横屏时也要考虑宽度限制，取较小值
+        const maxSizeFromWidth = width * 0.42 // 再增加一点到屏幕宽度的42%
+        const finalSize = Math.min(sizeFromHeight, maxSizeFromWidth)
+        
+        const center = finalSize / 2
+        const outerRadius = center - 8
+        const innerRadius = center - 16
+        const strokeWidth = finalSize < 150 ? 1 : finalSize < 200 ? 1.5 : finalSize < 250 ? 2 : 2.5
+        
+        // 横屏时使用更小的圆环宽度
+        let ringWidth
+        if (finalSize < 120) {
+          ringWidth = 4
+        } else if (finalSize < 150) {
+          ringWidth = 6
+        } else if (finalSize < 180) {
+          ringWidth = 8
+        } else if (finalSize < 220) {
+          ringWidth = 10
+        } else if (finalSize < 260) {
+          ringWidth = 12
+        } else {
+          ringWidth = 14
+        }
+        
+        const outerRingInset = ringWidth
+        const innerRingInset = Math.max(3, ringWidth - 2)
+        
+        return { 
+          size: finalSize, 
+          center: center, 
+          outerRadius: outerRadius, 
+          innerRadius: innerRadius, 
+          strokeWidth: strokeWidth,
+          outerRingInset: outerRingInset,
+          innerRingInset: innerRingInset
+        }
       } else {
-        sizeFromWidth = 360
-      }
-      
-      // 取宽度和高度限制中的较小值
-      const finalSize = Math.min(sizeFromWidth, maxSizeFromHeight)
-      const center = finalSize / 2
-      const outerRadius = center - 10
-      const innerRadius = center - 20
-      const strokeWidth = finalSize < 200 ? 1.5 : finalSize < 300 ? 2 : 3
-      
-      // 响应式圆环宽度 - 针对更小屏幕优化
-      let ringWidth
-      if (finalSize < 160) {
-        ringWidth = 6  // 超小屏幕
-      } else if (finalSize < 200) {
-        ringWidth = 8  // 很小屏幕
-      } else if (finalSize < 240) {
-        ringWidth = 10 // 小屏幕 (iPhone SE等)
-      } else if (finalSize < 280) {
-        ringWidth = 12 // 中小屏幕
-      } else if (finalSize < 320) {
-        ringWidth = 14 // 中屏幕
-      } else {
-        ringWidth = 16 // 大屏幕
-      }
-      const outerRingInset = ringWidth
-      const innerRingInset = Math.max(4, ringWidth - 3) // 确保内圆环至少有4px
-      
-      return { 
-        size: finalSize, 
-        center: center, 
-        outerRadius: outerRadius, 
-        innerRadius: innerRadius, 
-        strokeWidth: strokeWidth,
-        outerRingInset: outerRingInset,
-        innerRingInset: innerRingInset
+        // 竖屏模式：优化尺寸计算以获得更大的表盘
+        // 减少预留空间，提高高度利用率
+        const availableHeight = height * 0.85 - 120 // 减少预留空间到120px
+        const maxSizeFromHeight = Math.min(availableHeight, height * 0.6) // 增加最大高度占比到60%
+        
+        // 基于宽度的尺寸计算 - 增加各档位的尺寸
+        let sizeFromWidth
+        if (width < 480) {
+          sizeFromWidth = 200 // 从160增加到200
+        } else if (width < 640) {
+          sizeFromWidth = 240 // 从200增加到240
+        } else if (width < 768) {
+          sizeFromWidth = 280 // 从240增加到280
+        } else if (width < 1024) {
+          sizeFromWidth = 320 // 从280增加到320
+        } else if (width < 1280) {
+          sizeFromWidth = 360 // 从320增加到360
+        } else {
+          sizeFromWidth = 400 // 从360增加到400
+        }
+        
+        // 取宽度和高度限制中的较小值
+        const finalSize = Math.min(sizeFromWidth, maxSizeFromHeight)
+        const center = finalSize / 2
+        const outerRadius = center - 8 // 减少边距以获得更大空间
+        const innerRadius = center - 16 // 调整内圆半径
+        const strokeWidth = finalSize < 200 ? 1.5 : finalSize < 250 ? 2 : finalSize < 300 ? 2.5 : 3
+        
+        // 响应式圆环宽度 - 适应更大的表盘
+        let ringWidth
+        if (finalSize < 180) {
+          ringWidth = 8  // 小屏幕
+        } else if (finalSize < 220) {
+          ringWidth = 10 // 中小屏幕
+        } else if (finalSize < 260) {
+          ringWidth = 12 // 中屏幕
+        } else if (finalSize < 300) {
+          ringWidth = 14 // 中大屏幕
+        } else if (finalSize < 340) {
+          ringWidth = 16 // 大屏幕
+        } else {
+          ringWidth = 18 // 超大屏幕
+        }
+        const outerRingInset = ringWidth
+        const innerRingInset = Math.max(4, ringWidth - 3) // 确保内圆环至少有4px
+        
+        return { 
+          size: finalSize, 
+          center: center, 
+          outerRadius: outerRadius, 
+          innerRadius: innerRadius, 
+          strokeWidth: strokeWidth,
+          outerRingInset: outerRingInset,
+          innerRingInset: innerRingInset
+        }
       }
     }
     return { size: 280, center: 140, outerRadius: 130, innerRadius: 120, strokeWidth: 2, outerRingInset: 14, innerRingInset: 11 }
   }
 
   const [dimensions, setDimensions] = useState(getResponsiveSize())
+  const [isLandscape, setIsLandscape] = useState(false)
+
+  // 检测屏幕方向
+  useEffect(() => {
+    const updateOrientation = () => {
+      if (typeof window !== 'undefined') {
+        const width = window.innerWidth
+        const height = window.innerHeight
+        const isMobile = width <= 1024
+        const isLandscapeMode = isMobile && width > height
+        setIsLandscape(isLandscapeMode)
+      }
+    }
+
+    updateOrientation()
+    window.addEventListener('resize', updateOrientation)
+    window.addEventListener('orientationchange', () => {
+      setTimeout(updateOrientation, 200)
+    })
+
+    return () => {
+      window.removeEventListener('resize', updateOrientation)
+      window.removeEventListener('orientationchange', updateOrientation)
+    }
+  }, [])
 
   // 分析图片颜色 - 支持动态图片路径
   const analyzeImageColors = (imagePath) => {
@@ -490,7 +573,7 @@ export default function Clock() {
   const formattedTime = formatTime()
 
   return (
-    <div className="flex flex-col items-center space-y-3 sm:space-y-4">
+    <div className={`flex flex-col items-center ${isLandscape ? 'space-y-1 sm:space-y-2' : 'space-y-3 sm:space-y-4'}`}>
       {/* 时钟表盘 - 炉石传说风格 */}
       <div className="relative">
         {/* 外层装饰环 - 响应式宽度 */}
@@ -778,17 +861,17 @@ export default function Clock() {
       {/* 时间显示 - 炉石风格 */}
       <div className="text-center">
         {/* 时间显示 */}
-        <div className="relative  mb-2">
+        <div className={`relative ${isLandscape ? 'mb-1' : 'mb-2'}`}>
           {/* 时间背景装饰 */}
-          <div className="absolute -inset-2 bg-gradient-to-br from-blue-400 via-blue-500 to-blue-600 rounded-lg shadow-lg opacity-20"></div>
-          <div className="relative text-lg sm:text-2xl lg:text-3xl xl:text-4xl font-bold select-none px-3 py-1">
+          <div className={`absolute bg-gradient-to-br from-blue-400 via-blue-500 to-blue-600 rounded-lg shadow-lg opacity-20 ${isLandscape ? '-inset-1' : '-inset-2'}`}></div>
+          <div className={`relative font-bold select-none ${isLandscape ? 'text-sm sm:text-lg lg:text-xl px-2 py-0.5' : 'text-lg sm:text-2xl lg:text-3xl xl:text-4xl px-3 py-1'}`}>
             <span style={{
               background: 'linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #60a5fa 100%)',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
               filter: 'drop-shadow(1px 1px 2px rgba(255,255,255,0.8))'
             }}>{formattedTime.time}</span>
-            <span className="text-sm sm:text-base lg:text-lg font-semibold opacity-90 ml-2"
+            <span className={`font-semibold opacity-90 ${isLandscape ? 'text-xs sm:text-sm ml-1' : 'text-sm sm:text-base lg:text-lg ml-2'}`}
                   style={{
                     background: 'linear-gradient(135deg, #dc2626 0%, #ef4444 50%, #f87171 100%)',
                     WebkitBackgroundClip: 'text',
@@ -802,8 +885,8 @@ export default function Clock() {
         
         {/* 日期提示 - 魔法卷轴风格 */}
         <div className="relative inline-block">
-          <div className="absolute -inset-1 bg-gradient-to-r from-blue-200 via-blue-100 to-blue-200 rounded-md opacity-60"></div>
-          <div className="relative text-[10px] sm:text-xs lg:text-sm text-blue-800 font-semibold select-none px-2 py-1 bg-blue-50/80 rounded-md border border-blue-300">
+          <div className={`absolute bg-gradient-to-r from-blue-200 via-blue-100 to-blue-200 rounded-md opacity-60 ${isLandscape ? 'inset-0' : '-inset-1'}`}></div>
+          <div className={`relative text-blue-800 font-semibold select-none bg-blue-50/80 rounded-md border border-blue-300 ${isLandscape ? 'text-[8px] sm:text-[10px] px-1 py-0.5' : 'text-[10px] sm:text-xs lg:text-sm px-2 py-1'}`}>
             🗓️ {time.toLocaleDateString('zh-CN', {
               year: 'numeric',
               month: 'long',
